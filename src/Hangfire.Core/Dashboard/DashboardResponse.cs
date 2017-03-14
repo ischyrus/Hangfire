@@ -29,5 +29,9 @@ namespace Hangfire.Dashboard
 
         public abstract void SetExpire(DateTimeOffset? value);
         public abstract Task WriteAsync(string text);
+
+        public string Redirect { get; set; }
+
+        public abstract void DoRedirect();
     }
 }

@@ -8,8 +8,8 @@
 @inherits RazorPage
 @{
     Layout = new LayoutPage(Strings.RecurringJobsPage_Title);
-	List<RecurringJobDto> recurringJobs;
-    
+    List<RecurringJobDto> recurringJobs;
+
     int from, perPage;
 
     int.TryParse(Query("from"), out from);
@@ -17,24 +17,47 @@
 
     Pager pager = null;
 
-	using (var connection = Storage.GetConnection())
-	{
-	    var storageConnection = connection as JobStorageConnection;
-	    if (storageConnection != null)
-	    {
-	        pager = new Pager(from, perPage, storageConnection.GetRecurringJobCount());
+    using (var connection = Storage.GetConnection())
+    {
+        var storageConnection = connection as JobStorageConnection;
+        if (storageConnection != null)
+        {
+            pager = new Pager(from, perPage, storageConnection.GetRecurringJobCount());
 	        recurringJobs = storageConnection.GetRecurringJobs(pager.FromRecord, pager.FromRecord + pager.RecordsPerPage - 1);
-	    }
-	    else
-	    {
+        }
+        else
+        {
             recurringJobs = connection.GetRecurringJobs();
-	    }
-	}
+        }
+    }
 }
 
 <div class="row">
     <div class="col-md-12">
         <h1 class="page-header">@Strings.RecurringJobsPage_Title</h1>
+
+        <div style="margin-bottom: 12px;">
+            <form method="post" class="form-inline" action="/hangfire/recurring/add">
+                <input type="hidden" name="job[]" value="12" />
+                <input type="text" class="form-control" name="Name" style="width: 15%;" placeholder="Name" />
+                <input type="text" class="form-control" name="Url" style="width: 55%;" placeholder="Url" />
+                <input type="text" class="form-control" name="FrequencyValue" placeholder="Value" style="width: 5%;" />
+                <select name="Frequency" class="form-control" style="width: 15%;">
+                    <option value="">[Frequency]</option>
+                    <option value="Minutely">Minutely</option>
+                    <option value="Hourly">Hourly</option>
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Yearly">Yearly</option>
+                    <option value="MinuteInterval">MinuteInterval</option>
+                    <option value="HourInterval">HourInterval</option>
+                    <option value="DayInterval">DayInterval</option>
+                    <option value="MonthInterval">MonthInterval</option>
+                </select>
+                <input type="submit" class="form-control" value="Add" style="width: 8%;" />
+            </form>
+        </div>
 
         @if (recurringJobs.Count == 0)
         {
@@ -153,7 +176,7 @@
                                             if (!String.IsNullOrEmpty(job.LastJobId))
                                             {
                                                 <a href="@Url.JobDetails(job.LastJobId)">
-                                                    <span class="label label-default label-hover" style="@($"background-color: {JobHistoryRenderer.GetForegroundStateColor(job.LastJobState)};")">
+                                                    <span class="label label-default label-hover" style="background-color: @JobHistoryRenderer.GetForegroundStateColor(job.LastJobState);">
                                                         @Html.RelativeTime(job.LastExecution.Value)
                                                     </span>
                                                 </a>

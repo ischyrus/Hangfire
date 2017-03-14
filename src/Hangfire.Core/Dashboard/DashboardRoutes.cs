@@ -17,6 +17,8 @@
 using System.Reflection;
 using Hangfire.Dashboard.Pages;
 using Hangfire.States;
+using System.Web;
+using System;
 
 namespace Hangfire.Dashboard
 {
@@ -167,6 +169,34 @@ namespace Hangfire.Dashboard
             Routes.AddRazorPage("/jobs/details/(?<JobId>.+)", x => new JobDetailsPage(x.Groups["JobId"].Value));
 
             Routes.AddRazorPage("/recurring", x => new RecurringJobsPage());
+            Routes.AddRecurringBatchAddCommand(
+                "/recurring/add",
+                (manager, name, url, frequency, frequencyValue) => {
+                    int? freq = null;
+            
+                    int parsedFrequenceValue;
+                    if (Int32.TryParse(frequencyValue, out parsedFrequenceValue))
+                    {
+                        freq = parsedFrequenceValue;
+                    }
+                    else
+                    {
+                        freq = null;
+                    }
+            
+                    string cron;
+                    MethodInfo method = typeof(Hangfire.Cron).GetMethod(frequency, BindingFlags.Public | BindingFlags.Static);
+                    if (freq.HasValue)
+                    {
+                        cron = method.Invoke(null, new object[] { freq.Value }) as string;
+                    }
+                    else
+                    {
+                        cron = method.Invoke(null, null) as string;
+                    }
+            
+                    manager.Create(name, url, cron);
+                });
             Routes.AddRecurringBatchCommand(
                 "/recurring/remove", 
                 (manager, jobId) => manager.RemoveIfExists(jobId));

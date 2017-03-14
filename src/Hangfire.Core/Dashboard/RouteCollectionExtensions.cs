@@ -76,6 +76,18 @@ namespace Hangfire.Dashboard
         }
 #endif
 
+        public static void AddBatchAddCommand(
+            [NotNull] this RouteCollection routes,
+            [NotNull] string pathTemplate,
+            [NotNull] Action<DashboardContext, string, string, string, string> command)
+        {
+            if (routes == null) throw new ArgumentNullException(nameof(routes));
+            if (pathTemplate == null) throw new ArgumentNullException(nameof(pathTemplate));
+            if (command == null) throw new ArgumentNullException(nameof(command));
+
+            routes.Add(pathTemplate, new BatchAddCommandDispatcher(command));
+        }
+
         public static void AddBatchCommand(
             [NotNull] this RouteCollection routes,
             [NotNull] string pathTemplate,
@@ -99,6 +111,20 @@ namespace Hangfire.Dashboard
             {
                 var client = new BackgroundJobClient(context.Storage);
                 command(client, jobId);
+            });
+        }
+
+        public static void AddRecurringBatchAddCommand(
+            this RouteCollection routes,
+            string pathTemplate,
+            [NotNull] Action<RecurringJobManager, string, string, string, string> command)
+        {
+            if (command == null) throw new ArgumentNullException(nameof(command));
+
+            routes.AddBatchAddCommand(pathTemplate, (context, name, url, frequency, frequencyValue) =>
+            {
+                var manager = new RecurringJobManager(context.Storage);
+                command(manager, name, url, frequency, frequencyValue);
             });
         }
 

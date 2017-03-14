@@ -22,6 +22,7 @@ using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
 using NCrontab;
+using System.Net;
 
 namespace Hangfire
 {
@@ -53,13 +54,34 @@ namespace Hangfire
             _factory = factory;
         }
 
+        public void Create(string name, string url, string frequency)
+        {
+            RecurringJob.AddOrUpdate(name, () => this.InvokeEndpoint(url), frequency);
+        }
+
+        public void InvokeEndpoint(string endpoint)
+        {
+            WebRequest request = HttpWebRequest.CreateHttp(endpoint);
+            using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+            {
+                if (response.StatusCode != HttpStatusCode.OK)
+                {
+                    throw new Exception("Failed");
+                }
+                else
+                {
+                    throw new Exception("Worked oh yeah");
+                }
+            }
+        }
+
         public void AddOrUpdate(string recurringJobId, Job job, string cronExpression, RecurringJobOptions options)
         {
             if (recurringJobId == null) throw new ArgumentNullException(nameof(recurringJobId));
             if (job == null) throw new ArgumentNullException(nameof(job));
             if (cronExpression == null) throw new ArgumentNullException(nameof(cronExpression));
             if (options == null) throw new ArgumentNullException(nameof(options));
-            
+
             ValidateCronExpression(cronExpression);
 
             using (var connection = _storage.GetConnection())
@@ -102,7 +124,7 @@ namespace Hangfire
                 {
                     return;
                 }
-                
+
                 var job = JobHelper.FromJson<InvocationData>(hash["Job"]).Deserialize();
                 var state = new EnqueuedState { Reason = "Triggered using recurring job manager" };
 

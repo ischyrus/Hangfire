@@ -56,5 +56,10 @@ namespace Hangfire.Dashboard
         {
             return _context.Response.WriteAsync(text);
         }
+
+        public override void DoRedirect()
+        {
+            _context.Response.Redirect(this.Redirect);
+        }
     }
 }

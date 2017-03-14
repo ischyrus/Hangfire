@@ -98,7 +98,16 @@ namespace Hangfire.Dashboard
 
                     context.UriMatch = findResult.Item2;
 
-                    return findResult.Item1.Dispatch(context);
+                    Task task = findResult.Item1.Dispatch(context);
+                    Task task2 = task.ContinueWith(tt =>
+                    {
+                        if (context.Response.StatusCode == (int)HttpStatusCode.Redirect)
+                        {
+                            context.Response.DoRedirect();
+                        }
+                    });
+
+                    return task2;
                 };
         }
 

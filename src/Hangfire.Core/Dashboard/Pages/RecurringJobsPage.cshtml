@@ -36,27 +36,18 @@
     <div class="col-md-12">
         <h1 class="page-header">@Strings.RecurringJobsPage_Title</h1>
 
-        <div style="margin-bottom: 12px;">
+        <div>
             <form method="post" class="form-inline" action="/hangfire/recurring/add">
                 <input type="hidden" name="job[]" value="12" />
                 <input type="text" class="form-control" name="Name" style="width: 15%;" placeholder="Name" />
                 <input type="text" class="form-control" name="Url" style="width: 55%;" placeholder="Url" />
-                <input type="text" class="form-control" name="FrequencyValue" placeholder="Value" style="width: 5%;" />
-                <select name="Frequency" class="form-control" style="width: 15%;">
-                    <option value="">[Frequency]</option>
-                    <option value="Minutely">Minutely</option>
-                    <option value="Hourly">Hourly</option>
-                    <option value="Daily">Daily</option>
-                    <option value="Weekly">Weekly</option>
-                    <option value="Monthly">Monthly</option>
-                    <option value="Yearly">Yearly</option>
-                    <option value="MinuteInterval">MinuteInterval</option>
-                    <option value="HourInterval">HourInterval</option>
-                    <option value="DayInterval">DayInterval</option>
-                    <option value="MonthInterval">MonthInterval</option>
-                </select>
+                <input type="text" class="form-control" name="Cron" placeholder="Cron Expression" style="width: 18%;" />
                 <input type="submit" class="form-control" value="Add" style="width: 8%;" />
             </form>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <div style="display: inline-block; width: 70%;"></div>
+            <div style="display: inline-block;"><a href="http://cron.nmonitoring.com/cron-generator.html">Cron Helper</a></div>
         </div>
 
         @if (recurringJobs.Count == 0)

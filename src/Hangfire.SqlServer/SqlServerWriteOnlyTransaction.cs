@@ -35,7 +35,7 @@ namespace Hangfire.SqlServer
     {
         private readonly Queue<Action<DbConnection, DbTransaction>> _commandQueue
             = new Queue<Action<DbConnection, DbTransaction>>();
-        private readonly Queue<Action> _afterCommitCommandQueue = new Queue<Action>(); 
+        private readonly Queue<Action> _afterCommitCommandQueue = new Queue<Action>();
 
         private readonly SortedSet<string> _lockedResources = new SortedSet<string>();
         private readonly SqlServerStorage _storage;
@@ -93,7 +93,7 @@ namespace Hangfire.SqlServer
 
         public override void SetJobState(string jobId, IState state)
         {
-            string addAndSetStateSql = 
+            string addAndSetStateSql =
 $@"insert into [{_storage.SchemaName}].State (JobId, Name, Reason, CreatedAt, Data)
 values (@jobId, @name, @reason, @createdAt, @data);
 update [{_storage.SchemaName}].Job set StateId = SCOPE_IDENTITY(), StateName = @name where Id = @id;";
@@ -123,10 +123,10 @@ values (@jobId, @name, @reason, @createdAt, @data)";
                 addStateSql,
                 new
                 {
-                    jobId = long.Parse(jobId), 
+                    jobId = long.Parse(jobId),
                     name = state.Name,
                     reason = state.Reason,
-                    createdAt = DateTime.UtcNow, 
+                    createdAt = DateTime.UtcNow,
                     data = JobHelper.ToJson(state.SerializeData())
                 },
                 transaction,
@@ -279,6 +279,26 @@ when not matched then insert ([Key], Field, Value) values (Source.[Key], Source.
                 _storage.CommandTimeout));
         }
 
+        public override void SetRangeInHashPurged(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (keyValuePairs == null) throw new ArgumentNullException(nameof(keyValuePairs));
+
+            string sql =
+$@";merge [{_storage.SchemaName}].HashPurged with (holdlock) as Target
+using (VALUES (@key, @field, @value)) as Source ([Key], Field, Value)
+on Target.[Key] = Source.[Key] and Target.Field = Source.Field
+when matched then update set Value = Source.Value
+when not matched then insert ([Key], Field, Value) values (Source.[Key], Source.Field, Source.Value);";
+
+            AcquireHashLock();
+            QueueCommand((connection, transaction) => connection.Execute(
+                sql,
+                keyValuePairs.Select(y => new { key = key, field = y.Key, value = y.Value }),
+                transaction,
+                _storage.CommandTimeout));
+        }
+
         public override void RemoveHash(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
@@ -287,7 +307,7 @@ when not matched then insert ([Key], Field, Value) values (Source.[Key], Source.
 
             AcquireHashLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 new { key },
                 transaction,
                 _storage.CommandTimeout));
@@ -305,7 +325,7 @@ values (@key, @value, 0.0)";
 
             AcquireSetLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 items.Select(value => new { key = key, value = value }).ToList(),
                 transaction,
                 _storage.CommandTimeout));
@@ -319,7 +339,7 @@ values (@key, @value, 0.0)";
 
             AcquireSetLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 new { key = key },
                 transaction,
                 _storage.CommandTimeout));
@@ -329,12 +349,12 @@ values (@key, @value, 0.0)";
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
-             string query = $@"
+            string query = $@"
 update [{_storage.SchemaName}].[Hash] set ExpireAt = @expireAt where [Key] = @key";
 
             AcquireHashLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 new { key = key, expireAt = DateTime.UtcNow.Add(expireIn) },
                 transaction,
                 _storage.CommandTimeout));
@@ -364,7 +384,7 @@ update [{_storage.SchemaName}].[List] set ExpireAt = @expireAt where [Key] = @ke
 
             AcquireListLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 new { key = key, expireAt = DateTime.UtcNow.Add(expireIn) },
                 transaction,
                 _storage.CommandTimeout));
@@ -379,7 +399,7 @@ update [{_storage.SchemaName}].Hash set ExpireAt = null where [Key] = @key";
 
             AcquireHashLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 new { key = key },
                 transaction,
                 _storage.CommandTimeout));
@@ -394,7 +414,7 @@ update [{_storage.SchemaName}].[Set] set ExpireAt = null where [Key] = @key";
 
             AcquireSetLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 new { key = key },
                 transaction,
                 _storage.CommandTimeout));
@@ -409,7 +429,7 @@ update [{_storage.SchemaName}].[List] set ExpireAt = null where [Key] = @key";
 
             AcquireListLock();
             QueueCommand((connection, transaction) => connection.Execute(
-                query, 
+                query,
                 new { key = key },
                 transaction,
                 _storage.CommandTimeout));

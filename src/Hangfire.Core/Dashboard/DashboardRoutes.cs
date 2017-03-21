@@ -17,7 +17,6 @@
 using System.Reflection;
 using Hangfire.Dashboard.Pages;
 using Hangfire.States;
-using System.Web;
 using System;
 
 namespace Hangfire.Dashboard

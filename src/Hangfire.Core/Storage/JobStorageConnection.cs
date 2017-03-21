@@ -111,5 +111,10 @@ namespace Hangfire.Storage
         {
             throw new NotSupportedException();
         }
+
+        public virtual void SetRangeInHashPurged([NotNull] string key, [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

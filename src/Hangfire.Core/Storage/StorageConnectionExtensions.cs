@@ -126,6 +126,11 @@ namespace Hangfire.Storage
                     dto.CreatedAt = JobHelper.DeserializeDateTime(hash["CreatedAt"]);
                 }
 
+                if (hash.ContainsKey("Url"))
+                {
+                    dto.Url = hash["Url"];
+                }
+
                 result.Add(dto);
             }
 

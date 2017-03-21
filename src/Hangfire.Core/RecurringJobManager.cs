@@ -23,6 +23,7 @@ using Hangfire.States;
 using Hangfire.Storage;
 using NCrontab;
 using System.Net;
+using System.Linq;
 
 namespace Hangfire
 {
@@ -56,12 +57,14 @@ namespace Hangfire
 
         public void Create(string name, string url, string frequency)
         {
-            RecurringJob.AddOrUpdate(name, () => this.InvokeEndpoint(url), frequency);
+            RecurringJob.AddOrUpdate(name, () => this.InvokeEndpoint(url), url, frequency);
         }
 
         public void InvokeEndpoint(string endpoint)
         {
             WebRequest request = HttpWebRequest.CreateHttp(endpoint);
+            request.Timeout = 30 * 60 * 1000;
+
             using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
             {
                 if (response.StatusCode != HttpStatusCode.OK)
@@ -70,12 +73,11 @@ namespace Hangfire
                 }
                 else
                 {
-                    throw new Exception("Worked oh yeah");
                 }
             }
         }
 
-        public void AddOrUpdate(string recurringJobId, Job job, string cronExpression, RecurringJobOptions options)
+        public void AddOrUpdate(string recurringJobId, Job job, string url, string cronExpression, RecurringJobOptions options)
         {
             if (recurringJobId == null) throw new ArgumentNullException(nameof(recurringJobId));
             if (job == null) throw new ArgumentNullException(nameof(job));
@@ -93,6 +95,7 @@ namespace Hangfire
                 recurringJob["Cron"] = cronExpression;
                 recurringJob["TimeZoneId"] = options.TimeZone.Id;
                 recurringJob["Queue"] = options.QueueName;
+                recurringJob["Url"] = url;
 
                 var existingJob = connection.GetAllEntriesFromHash($"recurring-job:{recurringJobId}");
                 if (existingJob == null)
@@ -111,6 +114,11 @@ namespace Hangfire
                     transaction.Commit();
                 }
             }
+        }
+
+        public void AddOrUpdate(string recurringJobId, Job job, string cronExpression, RecurringJobOptions options)
+        {
+            this.AddOrUpdate(recurringJobId, job, null, cronExpression, options);
         }
 
         public void Trigger(string recurringJobId)
@@ -146,11 +154,23 @@ namespace Hangfire
             using (var connection = _storage.GetConnection())
             using (var transaction = connection.CreateWriteTransaction())
             {
+                Dictionary<string, string> jobData = connection.GetAllEntriesFromHash("recurring-job:" + recurringJobId);
+                jobData["Deleted"] = DateTime.Now.ToString();
+                connection.SetRangeInHashPurged($"{recurringJobId}:{RandomString(6)}", jobData);
+
                 transaction.RemoveHash($"recurring-job:{recurringJobId}");
                 transaction.RemoveFromSet("recurring-jobs", recurringJobId);
 
                 transaction.Commit();
             }
+        }
+
+        private static Random random = new Random();
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
         private static void ValidateCronExpression(string cronExpression)

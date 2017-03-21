@@ -56,5 +56,10 @@ namespace Hangfire.Dashboard
         {
             _context.Response.Headers["Expires"] = value?.ToString("r", CultureInfo.InvariantCulture);
         }
+
+        public override void DoRedirect()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

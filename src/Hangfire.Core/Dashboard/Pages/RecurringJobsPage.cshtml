@@ -151,7 +151,11 @@
                                     }
                                     </td>
                                     <td class="word-break">
-                                        @if (job.Job != null)
+                                        @if (job.Url != null)
+                                        {
+                                            @job.Url
+                                        }
+                                        else if (job.Job != null)
                                         {
                                             @: @Html.JobName(job.Job)
                                         }

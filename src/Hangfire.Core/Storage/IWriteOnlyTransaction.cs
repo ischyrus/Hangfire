@@ -49,6 +49,7 @@ namespace Hangfire.Storage
         void TrimList([NotNull] string key, int keepStartingFrom, int keepEndingAt);
 
         // Hash operations
+        void SetRangeInHashPurged(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs);
         void SetRangeInHash([NotNull] string key, [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs);
         void RemoveHash([NotNull] string key);
 

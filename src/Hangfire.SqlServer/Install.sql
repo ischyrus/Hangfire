@@ -298,6 +298,23 @@ BEGIN
 	);
 	PRINT 'Created index [UX_HangFire_Hash_Key_Field]';
 
+	CREATE TABLE [$(HangFireSchema)].[HashPurged](
+		[Id] [int] IDENTITY(1,1) NOT NULL,
+		[Key] [nvarchar](100) NOT NULL,
+		[Field] [nvarchar](100) NOT NULL,
+		[Value] [nvarchar](max) NULL,
+		[ExpireAt] [datetime2](7) NULL,
+		
+		CONSTRAINT [PK_HangFire_Hash_Purged] PRIMARY KEY CLUSTERED ([Id] ASC)
+	);
+	PRINT 'Created table [$(HangFireSchema)].[HashPurged]';
+
+	CREATE UNIQUE NONCLUSTERED INDEX [UX_HangFire_Hash_Purged_Key_Field] ON [$(HangFireSchema)].[HashPurged] (
+		[Key] ASC,
+		[Field] ASC
+	);
+	PRINT 'Created index [UX_HangFire_Hash_Purged_Key_Field]';
+
 	SET @CURRENT_SCHEMA_VERSION = 3;
 END
 

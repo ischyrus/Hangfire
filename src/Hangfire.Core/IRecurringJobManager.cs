@@ -22,6 +22,13 @@ namespace Hangfire
     public interface IRecurringJobManager
     {
         void AddOrUpdate(
+            [NotNull] string recurringJobId,
+            [NotNull] Job job,
+            string url,
+            [NotNull] string cronExpression,
+            [NotNull] RecurringJobOptions options);
+
+        void AddOrUpdate(
             [NotNull] string recurringJobId, 
             [NotNull] Job job, 
             [NotNull] string cronExpression, 

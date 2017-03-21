@@ -273,6 +273,31 @@ when not matched then insert ([Key], Field, Value) values (Source.[Key], Source.
             });
         }
 
+        public override void SetRangeInHashPurged([NotNull] string key, [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (keyValuePairs == null) throw new ArgumentNullException(nameof(keyValuePairs));
+
+            string sql =
+$@";merge [{_storage.SchemaName}].HashPurged with (holdlock) as Target
+using (VALUES (@key, @field, @value)) as Source ([Key], Field, Value)
+on Target.[Key] = Source.[Key] and Target.Field = Source.Field
+when matched then update set Value = Source.Value
+when not matched then insert ([Key], Field, Value) values (Source.[Key], Source.Field, Source.Value);";
+
+            _storage.UseTransaction((connection, transaction) =>
+            {
+                foreach (var keyValuePair in keyValuePairs)
+                {
+                    connection.Execute(
+                        sql,
+                        new { key = key, field = keyValuePair.Key, value = keyValuePair.Value },
+                        transaction,
+                        commandTimeout: _storage.CommandTimeout);
+                }
+            });
+        }
+
         public override Dictionary<string, string> GetAllEntriesFromHash(string key)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));

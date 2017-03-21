@@ -32,6 +32,7 @@ namespace Hangfire.Storage
         public DateTime? LastExecution { get; set; }
         public DateTime? CreatedAt { get; set; }
         public bool Removed { get; set; }
+        public string Url { get; set; }
         public string TimeZoneId { get; set; }
     }
 }

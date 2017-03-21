@@ -60,6 +60,7 @@ namespace Hangfire.Storage
         // Hash operations
 
         void SetRangeInHash([NotNull] string key, [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs);
+        void SetRangeInHashPurged([NotNull] string key, [NotNull] IEnumerable<KeyValuePair<string, string>> keyValuePairs);
 
         [CanBeNull]
         Dictionary<string, string> GetAllEntriesFromHash([NotNull] string key);

@@ -1,10 +1,11 @@
 ﻿using Hangfire;
+using Hangfire.Common;
 using Hangfire.Dashboard;
 using Hangfire.SqlServer;
 using Microsoft.Owin;
 using MvcSample;
 using Owin;
-using System;
+using System.Linq;
 
 [assembly: OwinStartup(typeof(Startup))]
 
@@ -23,6 +24,9 @@ namespace MvcSample
             
             app.UseHangfireDashboard();
             app.UseHangfireServer();
+
+            JobFilter defaultRetryFilter = GlobalJobFilters.Filters.Where(j => j.Instance is AutomaticRetryAttribute).First();
+            GlobalJobFilters.Filters.Remove(defaultRetryFilter.Instance);
         }
     }
 }

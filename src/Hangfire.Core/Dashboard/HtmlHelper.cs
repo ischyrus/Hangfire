@@ -141,7 +141,7 @@ namespace Hangfire.Dashboard
 
         public NonEscapedString JobNameLink(string jobId, Job job)
         {
-            return Raw($"<a class=\"job-method\" href=\"{_page.Url.JobDetails(jobId)}\">{HtmlEncode(JobName(job))}</a>");
+            return Raw($"<a class=\"job-method\" href=\"{_page.Url.JobDetails(jobId)}\">{HtmlEncode(job.Url ?? JobName(job))}</a>");
         }
 
         public NonEscapedString RelativeTime(DateTime value)

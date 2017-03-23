@@ -91,10 +91,14 @@ namespace Hangfire.Storage
             var result = new List<RecurringJobDto>();
             foreach (var id in ids)
             {
-                var hash = connection.GetAllEntriesFromHash(id);
+                var hash = connection.GetAllEntriesFromHash("recurring-job:" + id);
                 var dto = PopulateFromHash(hash, connection);
-                
-                result.Add(dto);
+
+                if (dto != null)
+                {
+                    dto.Id = id;
+                    result.Add(dto);
+                }
             }
             return result;
         }
@@ -108,7 +112,11 @@ namespace Hangfire.Storage
                 var hash = connection.GetAllEntriesFromPurgedHash(id);
                 var dto = PopulateFromHash(hash, connection);
 
-                result.Add(dto);
+                if (dto != null)
+                {
+                    dto.Id = id;
+                    result.Add(dto);
+                }
             }
             return result;
         }

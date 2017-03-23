@@ -176,6 +176,8 @@ namespace Hangfire.Common
         /// </summary>
         [NotNull]
         public IReadOnlyList<object> Args { get; }
+
+        public string Url { get; set; }
         
         public override string ToString()
         {

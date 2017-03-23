@@ -84,6 +84,15 @@ values (@invocationData, @arguments, @createdAt, @expireAt)";
 
             var invocationData = InvocationData.Serialize(job);
 
+            if (parameters.ContainsKey("RecurringJobId"))
+            {
+                var hashValues = _storage.GetConnection().GetAllEntriesFromHash("recurring-job:" + parameters["RecurringJobId"].Trim('"'));
+                if (hashValues != null && hashValues.ContainsKey("Url"))
+                {
+                    parameters["Url"] = hashValues["Url"];
+                }
+            }
+
             return _storage.UseConnection(connection =>
             {
                 var jobId = connection.ExecuteScalar<long>(

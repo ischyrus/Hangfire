@@ -56,6 +56,11 @@ namespace Hangfire.Storage
             throw new NotSupportedException();
         }
 
+        public virtual long GetPurgedSetCount()
+        {
+            throw new NotSupportedException();
+        }
+
         public virtual List<string> GetRangeFromSet([NotNull] string key, int startingFrom, int endingAt)
         {
             throw new NotSupportedException();
@@ -68,6 +73,20 @@ namespace Hangfire.Storage
 
         // Hashes
         public abstract void SetRangeInHash(string key, IEnumerable<KeyValuePair<string, string>> keyValuePairs);
+        public virtual List<string> GetRangeFromPurgeSet(string key, int startingFrom, int endingAt)
+        {
+            throw new NotSupportedException();
+        }
+        public virtual HashSet<string> GetAllItemsFromPurgedSet()
+        {
+            throw new NotSupportedException();
+        }
+
+        public virtual Dictionary<string, string> GetAllEntriesFromPurgedHash(string key)
+        {
+            throw new NotSupportedException();
+        }
+
         public abstract Dictionary<string, string> GetAllEntriesFromHash(string key);
 
         public virtual string GetValueFromHash([NotNull] string key, [NotNull] string name)

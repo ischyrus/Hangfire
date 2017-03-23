@@ -24,8 +24,8 @@ namespace Hangfire.Storage
     public static class StorageConnectionExtensions
     {
         public static IDisposable AcquireDistributedJobLock(
-            [NotNull] this IStorageConnection connection, 
-            [NotNull] string jobId, 
+            [NotNull] this IStorageConnection connection,
+            [NotNull] string jobId,
             TimeSpan timeout)
         {
             if (connection == null) throw new ArgumentNullException(nameof(connection));
@@ -41,6 +41,12 @@ namespace Hangfire.Storage
             if (connection == null) throw new ArgumentNullException(nameof(connection));
             return connection.GetSetCount("recurring-jobs");
         }
+        public static long GetPurgedJobCount([NotNull] this JobStorageConnection connection)
+        {
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+            return connection.GetPurgedSetCount();
+        }
+
 
         public static List<RecurringJobDto> GetRecurringJobs(
             [NotNull] this JobStorageConnection connection,
@@ -53,6 +59,17 @@ namespace Hangfire.Storage
             return GetRecurringJobDtos(connection, ids);
         }
 
+        public static List<RecurringJobDto> GetPurgedJobs(
+            [NotNull] this JobStorageConnection connection,
+            int startingFrom,
+            int endingAt)
+        {
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+
+            var ids = connection.GetRangeFromPurgeSet("recurring-jobs", startingFrom, endingAt);
+            return GetRecurringPurgedJobDtos(connection, ids);
+        }
+
         public static List<RecurringJobDto> GetRecurringJobs([NotNull] this IStorageConnection connection)
         {
             if (connection == null) throw new ArgumentNullException(nameof(connection));
@@ -61,80 +78,110 @@ namespace Hangfire.Storage
             return GetRecurringJobDtos(connection, ids);
         }
 
+        public static List<RecurringJobDto> GetPurgedJobs([NotNull] this IStorageConnection connection)
+        {
+            if (connection == null) throw new ArgumentNullException(nameof(connection));
+
+            var ids = connection.GetAllItemsFromPurgedSet();
+            return GetRecurringPurgedJobDtos(connection, ids);
+        }
+
         private static List<RecurringJobDto> GetRecurringJobDtos(IStorageConnection connection, IEnumerable<string> ids)
         {
             var result = new List<RecurringJobDto>();
             foreach (var id in ids)
             {
-                var hash = connection.GetAllEntriesFromHash($"recurring-job:{id}");
-
-                if (hash == null)
-                {
-                    result.Add(new RecurringJobDto { Id = id, Removed = true });
-                    continue;
-                }
-
-                var dto = new RecurringJobDto
-                {
-                    Id = id,
-                    Cron = hash["Cron"]
-                };
-
-                try
-                {
-                    var invocationData = JobHelper.FromJson<InvocationData>(hash["Job"]);
-                    dto.Job = invocationData.Deserialize();
-                }
-                catch (JobLoadException ex)
-                {
-                    dto.LoadException = ex;
-                }
-
-                if (hash.ContainsKey("NextExecution"))
-                {
-                    dto.NextExecution = JobHelper.DeserializeDateTime(hash["NextExecution"]);
-                }
-
-                if (hash.ContainsKey("LastJobId") && !string.IsNullOrWhiteSpace(hash["LastJobId"]))
-                {
-                    dto.LastJobId = hash["LastJobId"];
-
-                    var stateData = connection.GetStateData(dto.LastJobId);
-                    if (stateData != null)
-                    {
-                        dto.LastJobState = stateData.Name;
-                    }
-                }
+                var hash = connection.GetAllEntriesFromHash(id);
+                var dto = PopulateFromHash(hash, connection);
                 
-                if (hash.ContainsKey("Queue"))
-                {
-                    dto.Queue = hash["Queue"];
-                }
+                result.Add(dto);
+            }
+            return result;
+        }
 
-                if (hash.ContainsKey("LastExecution"))
-                {
-                    dto.LastExecution = JobHelper.DeserializeDateTime(hash["LastExecution"]);
-                }
 
-                if (hash.ContainsKey("TimeZoneId"))
-                {
-                    dto.TimeZoneId = hash["TimeZoneId"];
-                }
-
-                if (hash.ContainsKey("CreatedAt"))
-                {
-                    dto.CreatedAt = JobHelper.DeserializeDateTime(hash["CreatedAt"]);
-                }
-
-                if (hash.ContainsKey("Url"))
-                {
-                    dto.Url = hash["Url"];
-                }
+        private static List<RecurringJobDto> GetRecurringPurgedJobDtos(IStorageConnection connection, IEnumerable<string> ids)
+        {
+            var result = new List<RecurringJobDto>();
+            foreach (var id in ids)
+            {
+                var hash = connection.GetAllEntriesFromPurgedHash(id);
+                var dto = PopulateFromHash(hash, connection);
 
                 result.Add(dto);
             }
-
             return result;
+        }
+        private static RecurringJobDto PopulateFromHash(Dictionary<string, string> hash, IStorageConnection connection)
+        {
+
+            if (hash == null)
+            {
+                return null;
+            }
+
+            var dto = new RecurringJobDto
+            {
+                Cron = hash["Cron"]
+            };
+
+            try
+            {
+                var invocationData = JobHelper.FromJson<InvocationData>(hash["Job"]);
+                dto.Job = invocationData.Deserialize();
+            }
+            catch (JobLoadException ex)
+            {
+                dto.LoadException = ex;
+            }
+
+            if (hash.ContainsKey("NextExecution"))
+            {
+                dto.NextExecution = JobHelper.DeserializeDateTime(hash["NextExecution"]);
+            }
+
+            if (hash.ContainsKey("LastJobId") && !string.IsNullOrWhiteSpace(hash["LastJobId"]))
+            {
+                dto.LastJobId = hash["LastJobId"];
+
+                var stateData = connection.GetStateData(dto.LastJobId);
+                if (stateData != null)
+                {
+                    dto.LastJobState = stateData.Name;
+                }
+            }
+
+            if (hash.ContainsKey("Queue"))
+            {
+                dto.Queue = hash["Queue"];
+            }
+
+            if (hash.ContainsKey("LastExecution"))
+            {
+                dto.LastExecution = JobHelper.DeserializeDateTime(hash["LastExecution"]);
+            }
+
+            if (hash.ContainsKey("TimeZoneId"))
+            {
+                dto.TimeZoneId = hash["TimeZoneId"];
+            }
+
+            if (hash.ContainsKey("CreatedAt"))
+            {
+                dto.CreatedAt = JobHelper.DeserializeDateTime(hash["CreatedAt"]);
+            }
+
+            if (hash.ContainsKey("Url"))
+            {
+                dto.Url = hash["Url"];
+            }
+            if (hash.ContainsKey("Deleted"))
+            {
+                dto.Deleted = DateTime.Parse(hash["Deleted"]);
+            }
+
+
+            return dto;
         }
     }
 }

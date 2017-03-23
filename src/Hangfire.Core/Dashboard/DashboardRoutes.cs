@@ -181,6 +181,8 @@ namespace Hangfire.Dashboard
                 "/recurring/trigger", 
                 (manager, jobId) => manager.Trigger(jobId));
 
+            Routes.AddRazorPage("/deleted", x => new PurgedJobsPage());
+
             Routes.AddRazorPage("/servers", x => new ServersPage());
             Routes.AddRazorPage("/retries", x => new RetriesPage());
 

@@ -236,6 +236,20 @@ when not matched then insert (JobId, Name, Value) values (Source.JobId, Source.N
                 return new HashSet<string>(result);
             });
         }
+        public override HashSet<string> GetAllItemsFromPurgedSet()
+        {
+           
+            return _storage.UseConnection(connection =>
+            {
+                var result = connection.Query<string>(
+                    $@"select distinct [Key] from [{_storage.SchemaName}].[HashPurged] with (readcommittedlock) ",
+                    new { },
+                    commandTimeout: _storage.CommandTimeout);
+
+                return new HashSet<string>(result);
+            });
+        }
+
 
         public override string GetFirstByLowestScoreFromSet(string key, double fromScore, double toScore)
         {
@@ -306,6 +320,22 @@ when not matched then insert ([Key], Field, Value) values (Source.[Key], Source.
             {
                 var result = connection.Query<SqlHash>(
                     $"select Field, Value from [{_storage.SchemaName}].Hash with (forceseek, readcommittedlock) where [Key] = @key",
+                    new { key },
+                    commandTimeout: _storage.CommandTimeout)
+                    .ToDictionary(x => x.Field, x => x.Value);
+
+                return result.Count != 0 ? result : null;
+            });
+        }
+
+        public override Dictionary<string, string> GetAllEntriesFromPurgedHash(string key)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
+            return _storage.UseConnection(connection =>
+            {
+                var result = connection.Query<SqlHash>(
+                    $"select Field, Value from [{_storage.SchemaName}].HashPurged with (forceseek, readcommittedlock) where [Key] = @key",
                     new { key },
                     commandTimeout: _storage.CommandTimeout)
                     .ToDictionary(x => x.Field, x => x.Value);
@@ -388,6 +418,14 @@ when not matched then insert (Id, Data, LastHeartbeat) values (Source.Id, Source
                 commandTimeout: _storage.CommandTimeout).First());
         }
 
+        public override long GetPurgedSetCount()
+        {           
+            return _storage.UseConnection(connection => connection.Query<int>(
+                $"select count(distinct [Key]) from [{_storage.SchemaName}].[HashPurged] with (readcommittedlock) ",
+                new { },
+                commandTimeout: _storage.CommandTimeout).First());
+        }
+
         public override List<string> GetRangeFromSet(string key, int startingFrom, int endingAt)
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
@@ -397,6 +435,22 @@ $@"select [Value] from (
 	select [Value], row_number() over (order by [Id] ASC) as row_num
 	from [{_storage.SchemaName}].[Set] with (readcommittedlock)
 	where [Key] = @key 
+) as s where s.row_num between @startingFrom and @endingAt";
+
+            return _storage.UseConnection(connection => connection
+                .Query<string>(query, new { key = key, startingFrom = startingFrom + 1, endingAt = endingAt + 1 }, commandTimeout: _storage.CommandTimeout)
+                .ToList());
+        }
+
+        public override List<string> GetRangeFromPurgeSet(string key, int startingFrom, int endingAt)
+        {
+            if (key == null) throw new ArgumentNullException(nameof(key));
+
+            string query =
+$@"select [Key] from (
+	select [Key], row_number() over (order by [Key] ASC) as row_num
+	from [{_storage.SchemaName}].[HashPurged] with (readcommittedlock)
+	group by [Key] 
 ) as s where s.row_num between @startingFrom and @endingAt";
 
             return _storage.UseConnection(connection => connection

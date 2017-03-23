@@ -8,8 +8,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-using System.Reflection;
-
 namespace Hangfire.Dashboard.Resources {
     using System;
     
@@ -41,7 +39,7 @@ namespace Hangfire.Dashboard.Resources {
         public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hangfire.Dashboard.Content.resx.Strings", typeof(Strings).GetTypeInfo().Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Hangfire.Dashboard.Content.resx.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -167,6 +165,15 @@ namespace Hangfire.Dashboard.Resources {
         public static string Common_DeleteConfirm {
             get {
                 return ResourceManager.GetString("Common_DeleteConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Deleted.
+        /// </summary>
+        public static string Common_Deleted {
+            get {
+                return ResourceManager.GetString("Common_Deleted", resourceCulture);
             }
         }
         
@@ -766,6 +773,15 @@ namespace Hangfire.Dashboard.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Purged Recurring Jobs.
+        /// </summary>
+        public static string Metrics_Purged {
+            get {
+                return ResourceManager.GetString("Metrics_Purged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Recurring Jobs.
         /// </summary>
         public static string Metrics_RecurringJobs {
@@ -816,6 +832,15 @@ namespace Hangfire.Dashboard.Resources {
         public static string Metrics_TotalConnections {
             get {
                 return ResourceManager.GetString("Metrics_TotalConnections", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Deleted Jobs.
+        /// </summary>
+        public static string NavigationMenu_DeletedJobs {
+            get {
+                return ResourceManager.GetString("NavigationMenu_DeletedJobs", resourceCulture);
             }
         }
         
@@ -928,6 +953,15 @@ namespace Hangfire.Dashboard.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Deleted Recurring Jobs.
+        /// </summary>
+        public static string PurgedJobsPage_Title {
+            get {
+                return ResourceManager.GetString("PurgedJobsPage_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No jobs queued..
         /// </summary>
         public static string QueuesPage_NoJobs {
@@ -955,7 +989,7 @@ namespace Hangfire.Dashboard.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Nexts jobs.
+        ///   Looks up a localized string similar to Next jobs.
         /// </summary>
         public static string QueuesPage_Table_NextsJobs {
             get {

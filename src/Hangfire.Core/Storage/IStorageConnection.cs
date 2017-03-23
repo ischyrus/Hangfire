@@ -50,6 +50,9 @@ namespace Hangfire.Storage
         void Heartbeat(string serverId);
         int RemoveTimedOutServers(TimeSpan timeOut);
 
+        HashSet<string> GetAllItemsFromPurgedSet();
+        Dictionary<string, string> GetAllEntriesFromPurgedHash(string key);
+
         // Set operations
 
         [NotNull]

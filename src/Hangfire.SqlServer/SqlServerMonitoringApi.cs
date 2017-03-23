@@ -330,7 +330,7 @@ select sum(s.[Value]) from (
     select [Value] from [{0}].AggregatedCounter with (nolock) where [Key] = N'stats:deleted'
 ) as s;
 
-select count(*) from [{0}].[Set] with (nolock) where [Key] = N'recurring-jobs';
+select count(*) from [{0}].[Set] with (nolock) where [Key] = N'recurring-jobs;'
                 ", _storage.SchemaName);
 
             var statistics = UseConnection(connection =>
@@ -349,6 +349,7 @@ select count(*) from [{0}].[Set] with (nolock) where [Key] = N'recurring-jobs';
                     stats.Deleted = multi.ReadSingleOrDefault<long?>() ?? 0;
 
                     stats.Recurring = multi.ReadSingle<int>();
+                    stats.Purged = connection.QuerySingle<int>($@"select count(distinct p.[Key]) as s from [{_storage.SchemaName}].HashPurged p");
                 }
                 return stats;
             });

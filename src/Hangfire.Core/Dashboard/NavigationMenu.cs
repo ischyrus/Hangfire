@@ -48,6 +48,12 @@ namespace Hangfire.Dashboard
                 Metric = DashboardMetrics.RecurringJobCount
             });
 
+            Items.Add(page => new MenuItem(Strings.NavigationMenu_DeletedJobs, page.Url.To("/deleted"))
+            {
+                Active = page.RequestPath.StartsWith("/deleted"),
+                Metric = DashboardMetrics.PurgedCount
+            });
+
             Items.Add(page => new MenuItem(Strings.NavigationMenu_Servers, page.Url.To("/servers"))
             {
                 Active = page.RequestPath.Equals("/servers"),

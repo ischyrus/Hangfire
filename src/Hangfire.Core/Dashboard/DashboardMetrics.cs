@@ -167,6 +167,11 @@ namespace Hangfire.Dashboard
                 Highlighted = page.Statistics.Failed > 0
             });
 
+        public static readonly DashboardMetric PurgedCount = new DashboardMetric(
+            "purged:count",
+            "Metrics_Purged",
+            page => new Metric(page.Statistics.Purged.ToString("N0")));
+
         public static readonly DashboardMetric DeletedCount = new DashboardMetric(
             "deleted:count",
              "Metrics_DeletedJobs",
